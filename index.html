@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vacation Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    
+    <!-- PWA iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Vacation Tracker">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 430px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .welcome-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .welcome-card h2 {
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px;
+        }
+        
+        .btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+        
+        .status {
+            background: #e8f5e9;
+            color: #388e3c;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 430px) {
+            .container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Vacation Tracker</h1>
+            <p>Gérez vos voyages facilement</p>
+        </div>
+        
+        <div class="content">
+            <div class="welcome-card">
+                <h2>Bienvenue Jordan ! 👋</h2>
+                <p>Ton app est maintenant en ligne !</p>
+                <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                    Version: 0.1.0 | PWA Ready
+                </p>
+            </div>
+            
+            <div id="status" class="status">
+                ✅ Application chargée avec succès
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn" onclick="testFirebase()">
+                    🔥 Tester Firebase
+                </button>
+                <button class="btn" onclick="installPWA()" id="installBtn" style="display: none;">
+                    📱 Installer l'app
+                </button>
+            </div>
+            
+            <div id="firebaseStatus" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK v9 -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        
+        // Configuration Firebase (à remplacer avec tes propres clés)
+        const firebaseConfig = {
+            apiKey: "TON-API-KEY",
+            authDomain: "TON-AUTH-DOMAIN",
+            databaseURL: "TON-DATABASE-URL",
+            projectId: "TON-PROJECT-ID",
+            storageBucket: "TON-STORAGE-BUCKET",
+            messagingSenderId: "TON-SENDER-ID",
+            appId: "TON-APP-ID"
+        };
+        
+        // Initialize Firebase
+        let app;
+        let db;
+        
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getDatabase(app);
+            console.log('Firebase initialisé avec succès !');
+        } catch (error) {
+            console.error('Erreur Firebase:', error);
+            document.getElementById('status').className = 'status error';
+            document.getElementById('status').textContent = '❌ Erreur: Configure Firebase dans le code';
+        }
+        
+        // Test Firebase
+        window.testFirebase = async function() {
+            const statusDiv = document.getElementById('firebaseStatus');
+            statusDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Connexion à Firebase...</p></div>';
+            
+            try {
+                // Écrire des données test
+                await set(ref(db, 'test/message'), {
+                    text: 'Hello from Vacation Tracker!',
+                    timestamp: Date.now()
+                });
+                
+                // Lire les données
+                const snapshot = await get(ref(db, 'test/message'));
+                const data = snapshot.val();
+                
+                statusDiv.innerHTML = `
+                    <div class="status">
+                        ✅ Firebase fonctionne !<br>
+                        Message: ${data.text}
+                    </div>
+                `;
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Erreur Firebase: ${error.message}
+                    </div>
+                `;
+            }
+        };
+        
+        // PWA Installation
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBtn').style.display = 'inline-block';
+        });
+        
+        window.installPWA = async function() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User ${outcome} the install prompt`);
+                deferredPrompt = null;
+                document.getElementById('installBtn').style.display = 'none';
+            }
+        };
+        
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/vacation-tracker/sw.js')
+                    .then(reg => console.log('Service Worker enregistré'))
+                    .catch(err => console.log('Service Worker erreur:', err));
+            });
+        }
+    </script>
+</body>
+</html>
