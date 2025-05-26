@@ -572,12 +572,13 @@
         
         // Setup map
         function setupMap() {
-            map = L.map('map').setView([46.603354, 1.888334], 6); // Centre sur la France
-            
-            // OpenStreetMap tiles
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors',
-                maxZoom: 19
+            map = L.map('map').setView([46.603354, 1.888334], 6);
+    
+            // Google Maps tiles au lieu d'OpenStreetMap
+            L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                attribution: '© Google Maps'
             }).addTo(map);
             
             // Click handler for adding markers
