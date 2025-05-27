@@ -43,10 +43,11 @@ export async function createTrip(tripData) {
 export async function addStep(tripId, stepData) {
     try {
         const stepsRef = ref(db, `trips/${tripId}/steps`);
-        await push(stepsRef, {
+        const newStepRef = await push(stepsRef, {
             ...stepData,
             timestamp: Date.now()
         });
+        return newStepRef.key; // Retourner l'ID de l'étape
     } catch (error) {
         console.error('Erreur lors de l\'ajout de l\'étape:', error);
         throw error;
