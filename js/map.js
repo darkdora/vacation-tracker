@@ -41,10 +41,15 @@ function handleMapClick(e) {
 async function addMarkerAtLocation(latlng) {
     const stepNumber = markers.length + 1;
     
-    // Créer l'icône personnalisée
+    // Créer l'icône personnalisée avec croix de suppression
     const icon = L.divIcon({
         className: 'custom-div-icon',
-        html: `<div style="background: #667eea; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">${stepNumber}</div>`,
+        html: `
+            <div style="position: relative;">
+                <div style="background: #667eea; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">${stepNumber}</div>
+                <button onclick="window.removeStep(${stepNumber - 1})" style="position: absolute; top: -8px; right: -8px; background: #ff4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">×</button>
+            </div>
+        `,
         iconSize: [30, 30],
         iconAnchor: [15, 15]
     });
@@ -58,11 +63,14 @@ async function addMarkerAtLocation(latlng) {
     updatePolylines();
     
     // Sauvegarder dans Firebase
-    await addStep(state.currentTrip, {
+    const stepRef = await addStep(state.currentTrip, {
         lat: latlng.lat,
         lng: latlng.lng,
         order: stepNumber
     });
+    
+    // Stocker l'ID Firebase dans le marqueur
+    marker.stepId = stepRef;
 }
 
 // Mettre à jour les lignes entre les marqueurs
@@ -188,6 +196,9 @@ async function searchLocation(query) {
                 div.onclick = () => {
                     selectSearchResult(result);
                 };
+
+// Fonction globale pour supprimer une étape
+window.removeStep = async function(index) {
                 searchResults.appendChild(div);
             });
         } else {
