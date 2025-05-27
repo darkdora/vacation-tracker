@@ -14,46 +14,14 @@
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+    
     <!-- Google Maps API -->
     <script>
       function initGooglePlaces() {
-        window.initGooglePlaces = function() {
-            const input = document.getElementById('searchInput');
-            const autocomplete = new google.maps.places.Autocomplete(input, {
-                types: ['geocode', 'establishment'],
-                fields: ['geometry', 'name', 'formatted_address']
-            });
-    
-        autocomplete.addListener('place_changed', () => {
-            const place = autocomplete.getPlace();
-        
-            if (place.geometry) {
-                // Centrer la carte sur le lieu trouvé
-                const lat = place.geometry.location.lat();
-                const lng = place.geometry.location.lng();
-            
-                map.setView([lat, lng], 15);
-            
-            // Retirer l'ancien marqueur de recherche
-            if (searchMarker) {
-                map.removeLayer(searchMarker);
-            }
-            
-            // Ajouter un marqueur temporaire
-            searchMarker = L.marker([lat, lng])
-                .addTo(map)
-                .bindPopup(place.name || place.formatted_address)
-                .openPopup();
-            
-            // Fermer les résultats
-            document.getElementById('searchResults').style.display = 'none';
-        }
-    });
-};
+        // On initialisera Google Places ici
       }
     </script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1eDUeUhsxwo26aTQ8i7UzmN99pRezDa0&libraries=places&callback=initGooglePlaces"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjx3CJAEd6YZTnwvjElYl3dqFc9OthKVw&libraries=places&callback=initGooglePlaces"></script>
     
     <style>
         * {
@@ -245,25 +213,10 @@
             font-size: 16px;
         }
         
-        .search-results {
-            background: white;
-            border-radius: 16px;
+        .pac-container {
+            border-radius: 12px;
             margin-top: 8px;
             box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-            max-height: 300px;
-            overflow-y: auto;
-            display: none;
-        }
-        
-        .search-result {
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: background 0.2s;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .search-result:hover {
-            background: #f5f5f5;
         }
         
         /* FAB */
@@ -393,6 +346,24 @@
             transform: translateY(-1px);
         }
         
+        /* Step Info */
+        .step-info {
+            position: absolute;
+            bottom: 160px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .step-info.active {
+            display: block;
+        }
+        
         /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -440,9 +411,11 @@
         <div id="mapView" class="view">
             <div class="search-container">
                 <input type="text" class="search-bar" placeholder="Rechercher un lieu..." id="searchInput">
-                <div class="search-results" id="searchResults"></div>
             </div>
             <div id="map"></div>
+            <div class="step-info" id="stepInfo">
+                <p>Cliquez sur la carte pour ajouter une étape</p>
+            </div>
             <div class="map-controls">
                 <button class="map-control-btn active" onclick="setMapMode('view')">
                     <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
@@ -501,7 +474,7 @@
         
         // Configuration Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyCjx3CJAEd6YZTnwvjElY13dqFc90thKVw",
+            apiKey: "AIzaSyCjx3CJAEd6YZTnwvjElYl3dqFc9OthKVw",
             authDomain: "vacation-tracker-app.firebaseapp.com",
             databaseURL: "https://vacation-tracker-app-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "vacation-tracker-app",
@@ -528,6 +501,38 @@
             loadTrips();
             setupMap();
         });
+        
+        // Initialize Google Places when API is loaded
+        window.initGooglePlaces = function() {
+            const input = document.getElementById('searchInput');
+            const autocomplete = new google.maps.places.Autocomplete(input, {
+                types: ['geocode', 'establishment'],
+                fields: ['geometry', 'name', 'formatted_address']
+            });
+            
+            autocomplete.addListener('place_changed', () => {
+                const place = autocomplete.getPlace();
+                
+                if (place.geometry) {
+                    // Centrer la carte sur le lieu trouvé
+                    const lat = place.geometry.location.lat();
+                    const lng = place.geometry.location.lng();
+                    
+                    map.setView([lat, lng], 15);
+                    
+                    // Retirer l'ancien marqueur de recherche
+                    if (searchMarker) {
+                        map.removeLayer(searchMarker);
+                    }
+                    
+                    // Ajouter un marqueur temporaire
+                    searchMarker = L.marker([lat, lng])
+                        .addTo(map)
+                        .bindPopup(place.name || place.formatted_address)
+                        .openPopup();
+                }
+            });
+        };
         
         // Load trips from Firebase
         function loadTrips() {
@@ -591,6 +596,12 @@
                 'mexique': '🇲🇽',
                 'inde': '🇮🇳',
                 'chine': '🇨🇳',
+                'belgique': '🇧🇪',
+                'suisse': '🇨🇭',
+                'portugal': '🇵🇹',
+                'grèce': '🇬🇷',
+                'maroc': '🇲🇦',
+                'thailande': '🇹🇭',
                 'default': '🌍'
             };
             
@@ -606,8 +617,8 @@
         
         // Setup map
         function setupMap() {
-            map = L.map('map').setView([46.603354, 1.888334], 6);
-    
+            map = L.map('map').setView([46.603354, 1.888334], 6); // Centre sur la France
+            
             // Google Maps tiles au lieu d'OpenStreetMap
             L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
                 maxZoom: 20,
@@ -625,13 +636,36 @@
         
         // Add step at location
         function addStepAtLocation(latlng) {
-            const marker = L.marker(latlng).addTo(map);
+            const stepNumber = markers.length + 1;
+            
+            // Créer un marqueur avec numéro
+            const icon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background: #667eea; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">${stepNumber}</div>`,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+            
+            const marker = L.marker(latlng, {icon: icon}).addTo(map);
+            marker.bindPopup(`Étape ${stepNumber}`).openPopup();
             markers.push(marker);
+            
+            // Tracer la ligne si il y a plus d'un marqueur
+            if (markers.length > 1) {
+                const latlngs = markers.map(m => m.getLatLng());
+                L.polyline(latlngs, {
+                    color: '#667eea',
+                    weight: 4,
+                    opacity: 0.6,
+                    dashArray: '10, 10'
+                }).addTo(map);
+            }
             
             // Save to Firebase
             const stepData = {
                 lat: latlng.lat,
                 lng: latlng.lng,
+                order: stepNumber,
                 timestamp: Date.now()
             };
             
@@ -667,28 +701,67 @@
                 btn.classList.remove('active');
             });
             event.target.closest('.map-control-btn').classList.add('active');
+            
+            const stepInfo = document.getElementById('stepInfo');
+            if (mode === 'add' && currentTrip) {
+                stepInfo.classList.add('active');
+            } else {
+                stepInfo.classList.remove('active');
+            }
         };
         
         // Open trip
         function openTrip(tripId, trip) {
             currentTrip = tripId;
             window.toggleView(); // Switch to map view
+            document.getElementById('headerTitle').textContent = trip.name;
+            
+            // Clear existing markers
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+            
+            // Clear existing polylines
+            map.eachLayer((layer) => {
+                if (layer instanceof L.Polyline) {
+                    map.removeLayer(layer);
+                }
+            });
             
             // Load trip steps
             const stepsRef = ref(db, `trips/${tripId}/steps`);
             get(stepsRef).then(snapshot => {
                 const steps = snapshot.val();
                 if (steps) {
-                    // Clear existing markers
-                    markers.forEach(m => map.removeLayer(m));
-                    markers = [];
+                    // Convert to array and sort by order
+                    const stepsArray = Object.entries(steps).map(([id, step]) => ({
+                        id,
+                        ...step
+                    })).sort((a, b) => a.order - b.order);
                     
                     // Add markers for each step
-                    Object.values(steps).forEach((step, index) => {
-                        const marker = L.marker([step.lat, step.lng]).addTo(map);
+                    stepsArray.forEach((step, index) => {
+                        const icon = L.divIcon({
+                            className: 'custom-div-icon',
+                            html: `<div style="background: #667eea; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">${index + 1}</div>`,
+                            iconSize: [30, 30],
+                            iconAnchor: [15, 15]
+                        });
+                        
+                        const marker = L.marker([step.lat, step.lng], {icon: icon}).addTo(map);
                         marker.bindPopup(`Étape ${index + 1}`);
                         markers.push(marker);
                     });
+                    
+                    // Draw route line
+                    if (markers.length > 1) {
+                        const latlngs = markers.map(m => m.getLatLng());
+                        L.polyline(latlngs, {
+                            color: '#667eea',
+                            weight: 4,
+                            opacity: 0.6,
+                            dashArray: '10, 10'
+                        }).addTo(map);
+                    }
                     
                     // Fit map to markers
                     if (markers.length > 0) {
@@ -730,14 +803,19 @@
             });
         };
         
-        // Search functionality (placeholder for now)
-        //document.getElementById('searchInput')?.addEventListener('input', (e) => {
-        //    const query = e.target.value;
-        //    if (query.length > 2) {
-                // Here we'll add Google Places search later
-        //        console.log('Searching for:', query);
-        //     }
-        // });
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>').value = '';
+                document.getElementById('tripStartDate').value = '';
+                document.getElementById('tripEndDate').value = '';
+            });
+        };
         
         // Close modals when clicking outside
         window.onclick = function(event) {
