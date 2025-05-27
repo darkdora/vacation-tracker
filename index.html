@@ -18,7 +18,39 @@
     <!-- Google Maps API -->
     <script>
       function initGooglePlaces() {
-        // On initialisera Google Places ici
+        window.initGooglePlaces = function() {
+            const input = document.getElementById('searchInput');
+            const autocomplete = new google.maps.places.Autocomplete(input, {
+                types: ['geocode', 'establishment'],
+                fields: ['geometry', 'name', 'formatted_address']
+            });
+    
+        autocomplete.addListener('place_changed', () => {
+            const place = autocomplete.getPlace();
+        
+            if (place.geometry) {
+                // Centrer la carte sur le lieu trouvé
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+            
+                map.setView([lat, lng], 15);
+            
+            // Retirer l'ancien marqueur de recherche
+            if (searchMarker) {
+                map.removeLayer(searchMarker);
+            }
+            
+            // Ajouter un marqueur temporaire
+            searchMarker = L.marker([lat, lng])
+                .addTo(map)
+                .bindPopup(place.name || place.formatted_address)
+                .openPopup();
+            
+            // Fermer les résultats
+            document.getElementById('searchResults').style.display = 'none';
+        }
+    });
+};
       }
     </script>
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1eDUeUhsxwo26aTQ8i7UzmN99pRezDa0&libraries=places&callback=initGooglePlaces"></script>
@@ -488,6 +520,8 @@
         let currentTrip = null;
         let mapMode = 'view';
         let markers = [];
+        let searchBox = null;
+        let searchMarker = null;
         
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {
@@ -697,13 +731,13 @@
         };
         
         // Search functionality (placeholder for now)
-        document.getElementById('searchInput')?.addEventListener('input', (e) => {
-            const query = e.target.value;
-            if (query.length > 2) {
+        //document.getElementById('searchInput')?.addEventListener('input', (e) => {
+        //    const query = e.target.value;
+        //    if (query.length > 2) {
                 // Here we'll add Google Places search later
-                console.log('Searching for:', query);
-            }
-        });
+        //        console.log('Searching for:', query);
+        //     }
+        // });
         
         // Close modals when clicking outside
         window.onclick = function(event) {
