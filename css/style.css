@@ -353,6 +353,15 @@ body {
     border-color: #667eea;
 }
 
+textarea.form-input {
+    resize: vertical;
+    min-height: 80px;
+}
+
+select.form-input {
+    cursor: pointer;
+}
+
 .date-inputs {
     display: grid;
     grid-template-columns: 1fr 1fr;
